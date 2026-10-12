@@ -1,0 +1,23 @@
+{
+	"short_name": "TaskGuru",
+	"name": "TaskGuru Task Manager",
+	"icons": [
+		{
+			"src": "https://ibb.co",
+			"type": "image/png",
+			"sizes": "512x512",
+			"purpose": "any"
+		},
+		{
+			"src": "https://ibb.co",
+			"type": "image/png",
+			"sizes": "192x192",
+			"purpose": "any"
+		}
+	],
+	"start_url": "./index.html",
+	"background_color": "#121212",
+	"theme_color": "#1e1e1e",
+	"display": "standalone",
+	"orientation": "portrait"
+}

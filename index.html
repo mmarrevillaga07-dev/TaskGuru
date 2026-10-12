@@ -1,0 +1,577 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>TaskGuru Prototype</title>
+    <!-- Import clean Google Fonts -->
+    <link href="https://googleapis.com" rel="stylesheet" />
+    
+    
+    <style>
+        body { font-family: var(--current-font, 'Segoe UI'), sans-serif; background-color: #121212; color: #ffffff; padding: 30px; transition: font-family 0.2s ease; }
+        .container { max-width: 500px; margin: auto; background: #1e1e1e; padding: 20px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
+        
+        /* Premium Clean App Header Bar */
+        .app-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #333; padding-bottom: 12px; margin-bottom: 15px; }
+        h2 { margin: 0; color: #4fc3f7; font-size: 24px; font-weight: 700; letter-spacing: -0.5px; }
+        
+        /* Time & Systems Widget */
+        .time-panel { display: flex; align-items: center; gap: 10px; }
+        .clock-widget { font-family: 'Roboto Mono', monospace; color: #00e676; font-size: 14px; font-weight: bold; cursor: pointer; background: #252525; padding: 6px 10px; border-radius: 4px; border: 1px solid #333; }
+        .analog-clock-icon { width: 30px; height: 30px; cursor: pointer; background: #252525; border-radius: 50%; border: 1px solid #4fc3f7; }
+        
+        /* Customization Controls Deck */
+        .controls { display: flex; flex-direction: column; gap: 10px; margin-bottom: 15px; background: #252525; padding: 12px; border-radius: 6px; }
+        .selectors-row { display: flex; gap: 10px; width: 100%; }
+        select { flex: 1; padding: 8px; background: #333; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 13px; }
+        .emojis-row { display: flex; gap: 8px; justify-content: flex-start; margin-top: 2px; }
+        .emoji-btn { background: #333; color: white; border: none; padding: 8px 12px; border-radius: 4px; cursor: pointer; font-size: 16px; flex: 1; text-align: center; }
+        
+        /* Integrated Alarm & Scheduling Deck */
+        .alarm-settings { display: flex; flex-direction: column; gap: 8px; background: #252525; padding: 12px; border-radius: 6px; margin-bottom: 15px; font-size: 13px; color: #aaa; }
+        .settings-row { display: flex; gap: 8px; align-items: center; width: 100%; }
+        .alarm-settings input[type="time"], .alarm-settings input[type="date"] { background: #333; color: white; border: none; padding: 6px; border-radius: 4px; font-family: 'Roboto Mono', monospace; flex: 1; }
+        .alarm-active-badge { display: none; color: #ffb300; font-weight: bold; font-size: 12px; animation: pulse 1.5s infinite; text-align: center; width: 100%; margin-top: 4px; }
+
+        /* Pull-Down Calendar Overlay Drawer */
+        .calendar-drawer { display: none; background: #252525; border: 1px solid #4fc3f7; padding: 15px; border-radius: 6px; margin-bottom: 15px; text-align: center; }
+        .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; margin-top: 10px; font-size: 12px; }
+        .calendar-day-header { font-weight: bold; color: #4fc3f7; }
+        .calendar-day { padding: 6px; background: #1e1e1e; border-radius: 3px; cursor: pointer; }
+        .calendar-day:hover { background: #333; }
+        .current-day { background: #00e676; color: #000; font-weight: bold; }
+
+        /* Input & Task Card Styles */
+        .input-group { display: flex; flex-direction: column; gap: 8px; margin-top: 10px; background: #252525; padding: 12px; border-radius: 6px; }
+        .date-pickers { display: flex; gap: 8px; width: 100%; }
+        input[type="text"] { width: 100%; padding: 12px; border-radius: 6px; border: none; background: #2d2d2d; color: #fff; box-sizing: border-box; }
+        .add-btn { width: 100%; padding: 12px 20px; background: #00e676; color: #000; font-weight: bold; cursor: pointer; border-radius: 6px; border: none; white-space: nowrap; }
+        
+        /* Edit Field Actions */
+        .edit-input { background: #3a3a3a; color: #fff; border: 1px solid #4fc3f7; padding: 6px; border-radius: 4px; width: 65%; font-family: inherit; font-size: 14px; }
+        .action-group { display: flex; gap: 6px; }
+        .edit-btn { background: #0288d1; color: white; width: auto; padding: 5px 10px; border: none; border-radius: 4px; font-size: 12px; cursor: pointer; }
+        .save-btn { background: #00e676; color: black; width: auto; padding: 5px 10px; border: none; border-radius: 4px; font-size: 12px; cursor: pointer; font-weight: bold; }
+
+        h3 { color: #ff5252; margin-top: 25px; margin-bottom: 5px; font-size: 16px; }
+        ul { list-style: none; padding: 0; margin-top: 10px; }
+        li { background: #2a2a2a; padding: 12px; margin-bottom: 8px; border-radius: 4px; display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+        .delete-btn { background: #ff5252; color: white; width: auto; padding: 5px 10px; border: none; border-radius: 4px; font-size: 12px; cursor: pointer; white-space: nowrap; }
+        .time-log { font-size: 10px; color: #aaa; display: block; margin-top: 4px; }
+        .trash-item { background: #2c1d1d; border-left: 4px solid #ff5252; }
+
+        /* 📱 Smart Mobile Responsive Layout Engine Overrides */
+        @media (max-width:480px){body{padding:15px}.app-header{flex-direction:column;align-items:flex-start;gap:12px}.time-panel{width:100%;justify-content:space-between}.selectors-row{flex-direction:column;gap:8px}.emojis-row{display:grid;grid-template-columns:repeat(4,1fr);width:100%}.settings-row{flex-direction:column;align-items:flex-start;gap:6px}.alarm-settings input[type="time"],.alarm-settings input[type="date"]{width:100%}.date-pickers{flex-direction:column;gap:6px}}
+        @keyframes pulse { 0% { opacity: 0.5; } 50% { opacity: 1; } 100% { opacity: 0.5; } }
+    </style>
+</head>
+	<body>
+
+<div class="container">
+    <div class="app-header">
+        <div style="display: flex; flex-direction: column; align-items: flex-start;">
+            <h2 style="line-height: 1.1; margin: 0;">TaskGuru<sup style="font-size: 11px; font-weight: normal; color: #4fc3f7; margin-left: 2px;">™</sup></h2>
+            <div style="font-size: 11px; color: #aaa; font-family: 'Inter', sans-serif; margin-top: 4px; font-style: italic; letter-spacing: 0.3px;">by: LogicMinds Tech</div>
+        </div>
+        <div class="time-panel">
+            <svg class="analog-clock-icon" id="analogClock" viewBox="0 0 100 100" onclick="toggleCalendar()" title="Click to open calendar">
+                <circle cx="50" cy="50" r="45" fill="none" stroke="#4fc3f7" stroke-width="3" />
+                <line id="hourHand" x1="50" y1="50" x2="50" y2="25" stroke="#ffffff" stroke-width="4" stroke-linecap="round" />
+                <line id="minuteHand" x1="50" y1="50" x2="50" y2="15" stroke="#ffffff" stroke-width="3" stroke-linecap="round" />
+                <line id="secondHand" x1="50" y1="50" x2="50" y2="10" stroke="#00e676" stroke-width="1.5" stroke-linecap="round" />
+            </svg>
+            <div class="clock-widget" id="liveClock" onclick="toggleCalendar()" title="Click to open calendar">00:00:00 PM</div>
+        </div>
+    </div>
+    
+    <div class="controls">
+        <div class="selectors-row">
+            <select id="fontSelector" onchange="changeFont(this.value)">
+                <option value="'Segoe UI'">Default System Font</option>
+                <option value="'Inter'">Inter (Modern/Clean)</option>
+                <option value="'Playfair Display'">Playfair (Elegant/Classic)</option>
+                <option value="'Roboto Mono'">Roboto Mono (Tech/Coding)</option>
+            </select>
+            
+            <select id="languageSelector" onchange="changeLanguage(this.value)">
+                <option value="en">English</option>
+                <option value="es">Español (Spanish)</option>
+                <option value="fr">Français (French)</option>
+                <option value="fil">Filipino</option>
+                <option value="zh">中文 (Chinese)</option>
+                <option value="ko">한국어 (Korean)</option>
+                <option value="de">Deutsch (German)</option>
+                <option value="hi">हिन्दी (Indian/Hindi)</option>
+                <option value="th">ไทย (Thai)</option>
+                <option value="ja">日本語 (Japanese)</option>
+            </select>
+        </div>
+        
+        <div class="emojis-row">
+            <button class="emoji-btn" onclick="stampEmoji('📝 ')">📝</button>
+            <button class="emoji-btn" onclick="stampEmoji('🔥 ')">🔥</button>
+            <button class="emoji-btn" onclick="stampEmoji('✅ ')">✅</button>
+            <button class="emoji-btn" onclick="stampEmoji('💡 ')">💡</button>
+        </div>
+    </div>
+
+    <!-- Hidden Pull-Down Calendar Module -->
+    <div class="calendar-drawer" id="calendarDrawer">
+        <div style="font-weight: bold; margin-bottom: 8px;" id="calendarMonthYear">September 2026</div>
+        <div class="calendar-grid" id="calendarGrid"></div>
+    </div>
+
+    <!-- Enhanced Task Definition Area with Pre-Dated Scheduling Controls -->
+    <div class="input-group">
+        <input type="text" id="taskInput" placeholder="What needs to be done?" />
+        
+    <!-- Labeled Date and Time Pickers for Mobile Clarity -->
+    <div class="date-pickers">
+            <div style="flex: 1; display: flex; flex-direction: column; gap: 4px;">
+                <span style="font-size: 11px; color: #bbb; font-family: 'Inter', sans-serif; font-weight: bold; letter-spacing: 0.5px;">DATE:</span>
+                <input type="date" id="taskTargetDate" />
+            </div>
+            <div style="flex: 1; display: flex; flex-direction: column; gap: 4px;">
+                <span style="font-size: 11px; color: #bbb; font-family: 'Inter', sans-serif; font-weight: bold; letter-spacing: 0.5px;">TIME:</span>
+                <input type="time" id="taskTargetTime" />
+            </div>
+        </div>
+
+        
+        <select id="taskNoticeWindow" title="Select notification buffer size">
+            <option value="0">At time of task execution</option>
+            <option value="1">1 Hour Prior notice window</option>
+            <option value="24">24 Hours Prior notice window</option>
+        </select>
+
+        <button class="add-btn" id="btnAddTask" onclick="handleAddTask()">Add Task</button>
+    </div>
+    
+    <div class="alarm-active-badge" id="alertNoticeBadge" style="background:#ff9100; color:black; padding:8px; border-radius:4px; margin-top:10px;">⚠️ TASK ALARM TRIGGERED</div>
+
+    <h3 id="lblActiveTasks">Active Tasks</h3>
+    <ul id="taskList"></ul>
+
+    <h3 id="lblTrashRoom">Trash Room (30-Day Auto Delete)</h3>
+    <ul id="trashList"></ul>
+</div>
+
+<script>
+    let tasks = JSON.parse(localStorage.getItem('taskguru_tasks')) || [];
+    let currentLang = localStorage.getItem('taskguru_lang') || 'en';
+    let activeAlertTimer = null;
+
+    const localizationDictionary = {
+        en: {
+            placeholder: "What needs to be done?",
+            addTask: "Add Task",
+            activeTasks: "Active Tasks",
+            trashRoom: "Trash Room (30-Day Auto Delete)",
+            deleteBtn: "Delete",
+            editBtn: "Edit",
+            saveBtn: "Save",
+            createdLog: "Created: ",
+            trashExpiry: "Will permanently delete in 30 days",
+            noticeTriggered: "⚠️ TASK NOTICE WINDOW IS OPEN!"
+        },
+        es: {
+            placeholder: "¿Qué hay que hacer?",
+            addTask: "Añadir Tarea",
+            activeTasks: "Tareas Activas",
+            trashRoom: "Papelera (Autoeliminación en 30 días)",
+            deleteBtn: "Eliminar",
+            editBtn: "Editar",
+            saveBtn: "Guardar",
+            createdLog: "Creado: ",
+            trashExpiry: "Se eliminará permanentemente en 30 días",
+            noticeTriggered: "⚠️ ¡LA VENTANA DE NOTIFICACIÓN ESTÁ ABIERTA!"
+        },
+        fr: {
+            placeholder: "Qu'y a-t-il à faire ?",
+            addTask: "Ajouter",
+            activeTasks: "Tâches Actives",
+            trashRoom: "Corbeille (Suppression auto 30 jours)",
+            deleteBtn: "Supprimer",
+            editBtn: "Modifier",
+            saveBtn: "Enregistrer",
+            createdLog: "Créé : ",
+            trashExpiry: "Sera supprimé définitivement dans 30 jours",
+            noticeTriggered: "⚠️ FENÊTRE DE NOTIFICATION OUVERTE !"
+        },
+        fil: {
+            placeholder: "Ano ang kailangang gawin?",
+            addTask: "Magdagdag",
+            activeTasks: "Mga Aktibong Gawain",
+            trashRoom: "Trash Room (Auto Delete pagkalipas ng 30 Araw)",
+            deleteBtn: "Burahin",
+            editBtn: "I-edit",
+            saveBtn: "I-save",
+            createdLog: "Nalikha: ",
+            trashExpiry: "Permanenteng mabubura sa loob ng 30 araw",
+            noticeTriggered: "⚠️ BUKAS ANG ORAS NG ALERTO NG GAWAIN!"
+        },
+        zh: {
+            placeholder: "有什么需要做的吗？",
+            addTask: "添加任务",
+            activeTasks: "进行中的任务",
+            trashRoom: "垃圾箱 (30天后自动永久删除)",
+            deleteBtn: "删除",
+            editBtn: "编辑",
+            saveBtn: "保存",
+            createdLog: "创建于: ",
+            trashExpiry: "将在30天内永久删除",
+            noticeTriggered: "⚠️ 任务提醒窗口已打开！"
+        },
+        ko: {
+            placeholder: "해야 할 일이 무엇인가요?",
+            addTask: "작업 추가",
+            activeTasks: "활성 작업 목록",
+            trashRoom: "휴지통 (30일 후 자동 영구 삭제)",
+            deleteBtn: "삭제",
+            editBtn: "수정",
+            saveBtn: "저장",
+            createdLog: "생성됨: ",
+            trashExpiry: "30일 후 영구 삭제됩니다",
+            noticeTriggered: "⚠️ 작업 알림 기간이 도래했습니다!"
+        }
+    };
+    // Extend localization dictionary with remaining global language matrices
+    Object.assign(localizationDictionary, {
+        de: {
+            placeholder: "Was gibt es zu tun?",
+            addTask: "Hinzufügen",
+            activeTasks: "Aktive Aufgaben",
+            trashRoom: "Papierkorb (Automatische Löschung nach 30 Tagen)",
+            deleteBtn: "Löschen",
+            editBtn: "Bearbeiten",
+            saveBtn: "Speichern",
+            createdLog: "Erstellt: ",
+            trashExpiry: "Wird in 30 Tagen permanent gelöscht",
+            noticeTriggered: "⚠️ AUFGABEN-BENACHRICHTIGUNGSFENSTER OFFEN!"
+        },
+        hi: {
+            placeholder: "क्या किया जाना बाकी है?",
+            addTask: "कार्य जोड़ें",
+            activeTasks: "सक्रिय कार्य सूची",
+            trashRoom: "कचरा पेटी (30 दिनों में स्वतः हटाएं)",
+            deleteBtn: "हटाएं",
+            editBtn: "संपादित करें",
+            saveBtn: "सहेजें",
+            createdLog: "बनाया गया: ",
+            trashExpiry: "30 दिनों में स्थायी रूप से हटा दिया जाएगा",
+            noticeTriggered: "⚠️ कार्य चेतावनी विंडो सक्रिय है!"
+        },
+        th: {
+            placeholder: "มีอะไรที่ต้องทำบ้าง?",
+            addTask: "เพิ่มงาน",
+            activeTasks: "งานที่ต้องทำอยู่",
+            trashRoom: "ถังขยะ (ลบอัตโนมัติหลังจาก 30 วัน)",
+            deleteBtn: "ลบ",
+            editBtn: "แก้ไข",
+            saveBtn: "บันทึก",
+            createdLog: "สร้างเมื่อ: ",
+            trashExpiry: "จะถูกลบอย่างถาวรภายใน 30 วัน",
+            noticeTriggered: "⚠️ เปิดหน้าต่างแจ้งเตือนงานแล้ว!"
+        },
+        ja: {
+            placeholder: "何かやるべき項目はありますか？",
+            addTask: "タスクを追加",
+            activeTasks: "現在のタスク",
+            trashRoom: "ゴミ箱 (30日後に自動で永久削除)",
+            deleteBtn: "削除",
+            editBtn: "編集",
+            saveBtn: "保存",
+            createdLog: "作成日時: ",
+            trashExpiry: "30日後に永久削除されます",
+            noticeTriggered: "⚠️ タスク의 通知ウィンドウが開いています！"
+        }
+    });
+	// 1. Unified Real-Time Clock & Dynamic Pre-Dated Alert Processor
+    function runClockEcosystem() {
+        const now = new Date();
+        document.getElementById('liveClock').innerText = now.toLocaleTimeString();
+
+        const secs = now.getSeconds();
+        const mins = now.getMinutes();
+        const hrs = now.getHours();
+
+        document.getElementById('secondHand').setAttribute('transform', 'rotate(' + (secs * 6) + ' 50 50)');
+        document.getElementById('minuteHand').setAttribute('transform', 'rotate(' + ((mins * 6) + (secs * 0.1)) + ' 50 50)');
+        document.getElementById('hourHand').setAttribute('transform', 'rotate(' + ((hrs * 30) + (mins * 0.5)) + ' 50 50)');
+
+        evaluateTaskAlertBoundaries(now.getTime());
+    }
+
+    function evaluateTaskAlertBoundaries(currentTimestampMs) {
+        let displayNotice = false;
+
+        tasks.forEach(task => {
+            if (task.status === "active" && task.alertTimestamp) {
+                const bufferWindowMs = parseInt(task.noticeWindowHours, 10) * 60 * 60 * 1000;
+                const activeTriggerTargetTime = task.alertTimestamp - bufferWindowMs;
+
+                if (currentTimestampMs >= activeTriggerTargetTime && currentTimestampMs < task.alertTimestamp) {
+                    displayNotice = true;
+                }
+            }
+        });
+
+        const badge = document.getElementById('alertNoticeBadge');
+        if (displayNotice) {
+            badge.style.display = 'block';
+            badge.innerText = localizationDictionary[currentLang].noticeTriggered;
+        } else {
+            badge.style.display = 'none';
+        }
+    }
+
+    // 2. Interactive Calendar Drawer Rendering
+    function toggleCalendar() {
+        const drawer = document.getElementById('calendarDrawer');
+        drawer.style.display = (drawer.style.display === "block") ? "none" : "block";
+        if (drawer.style.display === "block") generateCalendarGrid();
+    }
+
+    function generateCalendarGrid() {
+        const grid = document.getElementById('calendarGrid');
+        const monthYearHeader = document.getElementById('calendarMonthYear');
+        grid.innerHTML = '';
+
+        const now = new Date();
+        const currentDay = now.getDate();
+        
+        ['S', 'M', 'T', 'W', 'T', 'F', 'S'].forEach(day => {
+            const h = document.createElement('div');
+            h.className = 'calendar-day-header';
+            h.innerText = day;
+            grid.appendChild(h);
+        });
+
+        monthYearHeader.innerText = now.toLocaleString('default', { month: 'long', year: 'numeric' });
+        
+        for (let i = 1; i <= 30; i++) {
+            const dayBox = document.createElement('div');
+            dayBox.className = 'calendar-day' + (i === currentDay ? ' current-day' : '');
+            dayBox.innerText = i.toString();
+            dayBox.onclick = () => {
+                const formatDay = i < 10 ? '0' + i : i;
+                const m = now.getMonth() + 1;
+                const formatMonth = m < 10 ? '0' + m : m;
+                document.getElementById('taskTargetDate').value = now.getFullYear() + '-' + formatMonth + '-' + formatDay;
+            };
+            grid.appendChild(dayBox);
+        }
+    }
+	    // 3. App Core Configurations & Personalization Handlers
+    function changeFont(fontName) {
+        document.body.style.setProperty('--current-font', fontName);
+        localStorage.setItem('taskguru_font', fontName);
+    }
+
+    function loadSavedFontPreference() {
+        const savedFont = localStorage.getItem('taskguru_font');
+        if (savedFont) {
+            document.body.style.setProperty('--current-font', savedFont);
+            document.getElementById('fontSelector').value = savedFont;
+        }
+    }
+
+    function changeLanguage(langCode) {
+        currentLang = langCode;
+        localStorage.setItem('taskguru_lang', langCode);
+        
+        const strings = localizationDictionary[langCode];
+        document.getElementById('taskInput').placeholder = strings.placeholder;
+        document.getElementById('btnAddTask').innerText = strings.addTask;
+        document.getElementById('lblActiveTasks').innerText = strings.activeTasks;
+        document.getElementById('lblTrashRoom').innerText = strings.trashRoom;
+        
+        renderTasks();
+    }
+
+    function stampEmoji(emoji) {
+        const input = document.getElementById('taskInput');
+        input.value = emoji + input.value;
+        input.focus();
+    }
+
+    // 4. Data Layout CRUD Controls Engine (Create, Read, Update, Delete)
+    function handleAddTask() {
+        const input = document.getElementById('taskInput');
+        const targetDate = document.getElementById('taskTargetDate').value;
+        const targetTime = document.getElementById('taskTargetTime').value;
+        const noticeWindow = document.getElementById('taskNoticeWindow').value;
+
+        if (!input.value.trim()) return;
+
+        let calculatedAlertTimestamp = null;
+        if (targetDate && targetTime) {
+            calculatedAlertTimestamp = new Date(targetDate + 'T' + targetTime).getTime();
+        }
+
+        const newTask = {
+            id: Date.now(),
+            title: input.value,
+            status: "active",
+            createdAt: new Date().toLocaleTimeString(),
+            deletedAt: null,
+            isEditing: false,
+            alertTimestamp: calculatedAlertTimestamp,
+            noticeWindowHours: noticeWindow
+        };
+
+        tasks.push(newTask);
+        saveAndRefreshWorkspace();
+        
+        input.value = '';
+        document.getElementById('taskTargetDate').value = '';
+        document.getElementById('taskTargetTime').value = '';
+    }
+
+    function toggleEditMode(id) {
+        tasks = tasks.map(t => {
+            if (t.id === id) t.isEditing = !t.isEditing;
+            return t;
+        });
+        renderTasks();
+    }
+
+    function handleSaveInlineEdit(id, updatedText, updatedDate, updatedTime) {
+        if (!updatedText.trim()) return;
+        
+        let customNewTimestamp = null;
+        if (updatedDate && updatedTime) {
+            customNewTimestamp = new Date(updatedDate + 'T' + updatedTime).getTime();
+        }
+
+        tasks = tasks.map(t => {
+            if (t.id === id) {
+                t.title = updatedText;
+                t.alertTimestamp = customNewTimestamp;
+                t.isEditing = false;
+            }
+            return t;
+        });
+        saveAndRefreshWorkspace();
+    }
+
+    function handleMoveToTrash(id) {
+        tasks = tasks.map(t => {
+            if (t.id === id) {
+                t.status = "trashed";
+                t.deletedAt = new Date().getTime();
+            }
+            return t;
+        });
+        saveAndRefreshWorkspace();
+    }
+
+    function runAutoDeleteCheck() {
+        const thirtyDaysInMs = 30 * 24 * 60 * 60 * 1000;
+        const now = new Date().getTime();
+
+        const cleanSet = tasks.filter(t => {
+            if (t.status === "trashed" && t.deletedAt) {
+                return (now - t.deletedAt) < thirtyDaysInMs;
+            }
+            return true;
+        });
+
+        if (cleanSet.length !== tasks.length) {
+            tasks = cleanSet;
+            localStorage.setItem('taskguru_tasks', JSON.stringify(tasks));
+        }
+    }
+
+    function saveAndRefreshWorkspace() {
+        localStorage.setItem('taskguru_tasks', JSON.stringify(tasks));
+        renderTasks();
+    }
+
+    function renderTasks() {
+        runAutoDeleteCheck();
+
+        const activeContainer = document.getElementById('taskList');
+        const trashContainer = document.getElementById('trashList');
+        const strings = localizationDictionary[currentLang];
+        
+        activeContainer.innerHTML = '';
+        trashContainer.innerHTML = '';
+
+        tasks.forEach(task => {
+            const li = document.createElement('li');
+            
+            if (task.status === "active") {
+                if (task.isEditing) {
+                    let currentDVal = "";
+                    let currentTVal = "";
+                    if (task.alertTimestamp) {
+                        const dObj = new Date(task.alertTimestamp);
+                        const yr = dObj.getFullYear();
+                        const mo = String(dObj.getMonth() + 1).padStart(2, '0');
+                        const dy = String(dObj.getDate()).padStart(2, '0');
+                        const hr = String(dObj.getHours()).padStart(2, '0');
+                        const mn = String(dObj.getMinutes()).padStart(2, '0');
+                        currentDVal = yr + '-' + mo + '-' + dy;
+                        currentTVal = hr + ':' + mn;
+                    }
+
+                    li.innerHTML = '<div style="display:flex; flex-direction:column; gap:6px; width:70%;">' +
+                                   '<input type="text" class="edit-input" style="width:100%;" id="editField-' + task.id + '" value="' + task.title + '" />' +
+                                   '<div style="display:flex; gap:4px;">' +
+                                   '<input type="date" id="editDate-' + task.id + '" value="' + currentDVal + '" style="background:#333; color:white; border:none; padding:4px; border-radius:4px; font-size:11px;" />' +
+                                   '<input type="time" id="editTime-' + task.id + '" value="' + currentTVal + '" style="background:#333; color:white; border:none; padding:4px; border-radius:4px; font-size:11px;" />' +
+                                   '</div>' +
+                                   '<span class="time-log">' + strings.createdLog + task.createdAt + '</span>' +
+                                   '</div>' +
+                                   '<div class="action-group"><button class="save-btn" onclick="handleSaveInlineEdit(' + task.id + ', document.getElementById(\'editField-\' + ' + task.id + ').value, document.getElementById(\'editDate-\' + ' + task.id + ').value, document.getElementById(\'editTime-\' + ' + task.id + ').value)">' + strings.saveBtn + '</button>' +
+                                   '<button class="delete-btn" onclick="toggleEditMode(' + task.id + ')">X</button></div>';
+                } else {
+                    let formattedSchedule = "";
+                    if (task.alertTimestamp) {
+                        const sObj = new Date(task.alertTimestamp);
+                        formattedSchedule = " | 📅 " + sObj.toLocaleDateString() + " " + sObj.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+                    }
+
+                    li.innerHTML = '<div style="max-width:65%; word-break:break-word;"><strong>' + task.title + '</strong>' +
+                                   '<span class="time-log">' + strings.createdLog + task.createdAt + formattedSchedule + '</span></div>' +
+                                   '<div class="action-group"><button class="edit-btn" onclick="toggleEditMode(' + task.id + ')">' + strings.editBtn + '</button>' +
+                                   '<button class="delete-btn" onclick="handleMoveToTrash(' + task.id + ')">' + strings.deleteBtn + '</button></div>';
+                }
+                activeContainer.appendChild(li);
+            } else if (task.status === "trashed") {
+                li.className = "trash-item";
+                li.innerHTML = '<div style="max-width:100%; word-break:break-word;"><strong style="text-decoration: line-through; color: #888;">' + task.title + '</strong><span class="time-log">' + strings.trashExpiry + '</span></div>';
+                trashContainer.appendChild(li);
+            }
+        });
+    }
+
+    // 5. Automatic PWA Background Engine Registration Setup
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', function() {
+            navigator.serviceWorker.register('./sw.js')
+                .then(function(reg) {
+                    console.log('TaskGuru Engine registered successfully:', reg.scope);
+                })
+                .catch(function(err) {
+                    console.log('TaskGuru Engine registration failed:', err);
+                });
+        });
+    }
+
+    setInterval(runClockEcosystem, 1000);
+    runClockEcosystem();
+    loadSavedFontPreference();
+    document.getElementById('languageSelector').value = currentLang;
+    changeLanguage(currentLang);
+</script>
+
+</body>
+</html>
+
+
+
+    
+
